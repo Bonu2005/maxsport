@@ -1,0 +1,295 @@
+// schema.prisma — исправленная версия для MaxSport (Prisma + PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * Enum'ы
+ */
+enum Role {
+  USER
+  TEACHER
+  ADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+  COMPLETED
+}
+
+/**
+ * Модели
+ */
+
+model Users {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  phoneNumber  String     @unique
+  password     String
+  role         Role       @default(USER)
+  individualId String?
+  img          String?
+  experience   Int?
+  status       Status     @default(PENDING)
+  // Relations
+  myCourses    MyCourse[] // пользовательские подписки/записи на курс
+  orders       Order[]
+  reviews      Review[]
+  payments     Payment[] // если нужно хранить прямые платежи пользователя (опционально)
+  homeworks    HomeWork[]
+
+  testResults        UserTestResult[]
+  coursesTaught      Course[]             @relation("TrainerCourses") // 👈 связь с курсами, где тренер
+  diplomasTaught     Diplom[]             @relation("TeacherDiploms") // 👈 добавляем это
+  // timestamps
+  createdAt          DateTime             @default(now())
+  Course             Course[]
+  Diplom             Diplom[]
+  Email_verification Email_verification[]
+  Sessions           Sessions[]
+  resetPasswords     Reset_Password[]
+}
+
+model Reset_Password {
+  id          String   @id @default(uuid())
+  userId      String
+  email       String   @unique
+  phone       String
+  secret      String
+  otpVerified Boolean  @default(false)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  user        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Email_verification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email       String   @unique
+  phoneNumber String   @unique
+  secret      String
+  otpVerified Boolean  @default(false)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Sessions {
+  id          String    @id @default(uuid())
+  ip          String
+  location    String?
+  info        String
+  date        DateTime  @default(now())
+  endDate     DateTime?
+  userId      String
+  user        Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceType  String
+  deviceGroup String
+  browser     String
+  createdAt   DateTime  @default(now())
+}
+
+model Course {
+  id          String    @id @default(uuid())
+  name        String
+  price       Float
+  text        String?
+  date        DateTime?
+  description String?
+  image       String[]
+  level       Int
+  status      Status    @default(ACTIVE)
+
+  // Trainer (user) — тренер курса (опционально)
+  trainerId String?
+  trainer   Users?  @relation("TrainerCourses", fields: [trainerId], references: [id])
+
+  // Relations
+  modules   Modul[]
+  lessons   Lesson[] // если у тебя уроки напрямую связаны с курсом
+  tests     Test[]
+  myCourses MyCourse[]
+  orders    Order[]
+  payments  Payment[] // прямые платежи, связанные с курсом (опционально)
+  diplomas  Diplom[]
+
+  createdAt DateTime @default(now())
+  User      Users?   @relation(fields: [userId], references: [id])
+  userId    String?
+}
+
+model Modul {
+  id        String   @id @default(uuid())
+  name      String
+  desc      String?
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  title     String
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+}
+
+model Lesson {
+  id       String   @id @default(uuid())
+  name     String
+  video    String?
+  img      String[]
+  desc     String?
+  duration Int?
+
+  // связь с модулем (обязательная)
+  modulId String
+  modul   Modul  @relation(fields: [modulId], references: [id])
+
+  homeworks HomeWork[]
+  createdAt DateTime   @default(now())
+  Course    Course?    @relation(fields: [courseId], references: [id])
+  courseId  String?
+}
+
+model HomeWork {
+  id     String @id @default(uuid())
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  text      String?
+  img       String[]
+  video     String[]
+  createdAt DateTime @default(now())
+  status    Status   @default(PENDING)
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+}
+
+model Review {
+  id     String @id @default(uuid())
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  message   String
+  rating    Int?
+  img       String[]
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  status    Status   @default(PENDING)
+  createdAt DateTime @default(now())
+
+  payments Payment[]
+}
+
+model Payment {
+  id       String @id @default(uuid())
+  amount   Float
+  status   Status @default(PENDING)
+  currency String @default("UZS")
+
+  // Payment привязан к order — это основная связь
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+  User      Users?   @relation(fields: [userId], references: [id])
+  userId    String?
+  Course    Course?  @relation(fields: [courseId], references: [id])
+  courseId  String?
+}
+
+model Test {
+  id       String @id @default(uuid())
+  name     String
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  questions   Question[]
+  userResults UserTestResult[]
+  createdAt   DateTime         @default(now())
+}
+
+model Question {
+  id             String   @id @default(uuid())
+  questionNumber Int
+  question       String
+  testId         String
+  test           Test     @relation(fields: [testId], references: [id])
+  img            String[]
+  answers        Answer[]
+}
+
+model Answer {
+  id         String   @id @default(uuid())
+  text       String
+  isRight    Boolean  @default(false)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+}
+
+model UserTestResult {
+  id     String   @id @default(uuid())
+  date   DateTime @default(now())
+  score  Float?
+  status Status   @default(COMPLETED)
+
+  testId String
+  test   Test   @relation(fields: [testId], references: [id])
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+}
+
+model Diplom {
+  id         String   @id @default(uuid())
+  codeDiplom String
+  createdAt  DateTime @default(now())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  teacherId String?
+  teacher   Users?  @relation("TeacherDiploms", fields: [teacherId], references: [id])
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  img String[]
+}
+
+model MyCourse {
+  id String @id @default(uuid())
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  userId String
+  user   Users  @relation(fields: [userId], references: [id])
+
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+}
+
+model Branche {
+  id    String  @id @default(uuid())
+  phone String?
+  email String?
+  sex   String?
+  time  String?
+}
