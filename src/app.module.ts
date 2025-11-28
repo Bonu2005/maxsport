@@ -7,14 +7,20 @@ import { BotModule } from './bot/bot.module';
 import { PaymentModule } from './payment/payment.module';
 import { CertificateModule } from './certificate/certificate.module';
 import { TrainerModule } from './trainer/trainer.module';
-import { CourseEnrollmentModule } from './course-enrollment/course-enrollment.module';
-import { ApplicationModule } from './application/application.module';
 import { MailerService } from './mailer/mailer.service';
+import { CourseModule } from './course/course.module';
+import { ModulModule } from './modul/modul.module';
+import { LessonModule } from './lesson/lesson.module';
+import { HomeworkModule } from './homework/homework.module';
+import { TestModule } from './test/test.module';
+import { QuestionModule } from './question/question.module';
+import { AnswerModule } from './answer/answer.module';
+import { UsertestresultModule } from './usertestresult/usertestresult.module';
 
 
 
 @Module({
-  imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseEnrollmentModule, ApplicationModule],
+  imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestModule, QuestionModule, AnswerModule, UsertestresultModule],
   controllers: [AppController],
   providers: [AppService, MailerService],
 })

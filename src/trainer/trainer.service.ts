@@ -1,26 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTrainerDto } from './dto/create-trainer.dto';
-import { UpdateTrainerDto } from './dto/update-trainer.dto';
+import * as bcrypt from 'bcrypt';
+import { Role, Status } from '@prisma/client';
 
 @Injectable()
 export class TrainerService {
-  create(createTrainerDto: CreateTrainerDto) {
-    return 'This action adds a new trainer';
-  }
+  constructor(private prisma: PrismaService) {}
 
-  findAll() {
-    return `This action returns all trainer`;
-  }
+  async create(dto: CreateTrainerDto) {
+    // проверка email
+    const emailExists = await this.prisma.users.findUnique({
+      where: { email: dto.email },
+    });
 
-  findOne(id: number) {
-    return `This action returns a #${id} trainer`;
-  }
+    if (emailExists) {
+      throw new BadRequestException('User with this email already exists');
+    }
 
-  update(id: number, updateTrainerDto: UpdateTrainerDto) {
-    return `This action updates a #${id} trainer`;
-  }
+    // проверка телефона
+    const phoneExists = await this.prisma.users.findUnique({
+      where: { phoneNumber: dto.phoneNumber },
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} trainer`;
+    if (phoneExists) {
+      throw new BadRequestException('User with this phone number already exists');
+    }
+
+    // хешируем пароль
+    const hash = await bcrypt.hash(dto.password, 10);
+
+    return this.prisma.users.create({
+      data: {
+        name: dto.name,
+        email: dto.email,
+        phoneNumber: dto.phoneNumber,
+        password: hash,
+        img: dto.img,
+        experience: dto.experience,
+        role: Role.TEACHER,
+        status: Status.ACTIVE, // 👈 всегда актив
+      },
+    });
   }
 }
