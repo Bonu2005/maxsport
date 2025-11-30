@@ -6,7 +6,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 /**
@@ -75,8 +74,8 @@ model Email_verification {
   id          String   @id @default(uuid())
   userId      String
   user        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  email       String   @unique
-  phoneNumber String   @unique
+  email       String?  @unique
+  phoneNumber String?  @unique
   secret      String
   otpVerified Boolean  @default(false)
   expiresAt   DateTime
