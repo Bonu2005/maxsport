@@ -16,11 +16,18 @@ import { TestModule } from './test/test.module';
 import { QuestionModule } from './question/question.module';
 import { AnswerModule } from './answer/answer.module';
 import { UsertestresultModule } from './usertestresult/usertestresult.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { MycourseModule } from './mycourse/mycourse.module';
+import { OrderModule } from './order/order.module';
 
 
 
 @Module({
-  imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestModule, QuestionModule, AnswerModule, UsertestresultModule],
+  imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestModule, QuestionModule, AnswerModule, UsertestresultModule, ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'), // указываем папку с файлами
+      serveRoot: '/uploads', // путь в URL
+    }), MycourseModule, OrderModule,],
   controllers: [AppController],
   providers: [AppService, MailerService],
 })

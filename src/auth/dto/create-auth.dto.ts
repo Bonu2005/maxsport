@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
-import { Status } from 'generated/prisma';
+import { Status } from '@prisma/client';
 
 export class CreateAuthDto {
   @ApiProperty({ description: 'Имя пользователя', example: 'MaxSportUser' })
@@ -42,7 +42,7 @@ export class VerifyOtpDto {
 export class SignInDto {
   @ApiProperty({ description: 'Email пользователя для входа', example: 'user@example.com' })
   @IsEmail()
-  @IsNotEmpty()
+  @IsOptional()
   email: string;
 
   @ApiProperty({ description: 'Пароль пользователя', example: 'StrongP@ssw0rd' })
@@ -56,7 +56,7 @@ export class SendOtpDto {
     description: 'Email или номер телефона пользователя',
     example: 'user@example.com или +998901234567',
   })
-  @IsNotEmpty()
+    @IsOptional()
   @IsString()
   to: string;
 

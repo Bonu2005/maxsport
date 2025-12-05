@@ -18,7 +18,7 @@ export class GuardGuard implements CanActivate {
       throw new UnauthorizedException()
     }
     try {
-      let user = this.jwt.verify(token, { secret: this.configService.get<string>('accessSecret') })
+      let user = this.jwt.verify(token, { secret: "secret_access" })
       request["user"] = user
     } catch (error) {
       throw new UnauthorizedException()

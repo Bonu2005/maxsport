@@ -1,34 +1,49 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { CertificateService } from './certificate.service';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
-import { UpdateCertificateDto } from './dto/update-certificate.dto';
+import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
 
-@Controller('certificate')
-export class CertificateController {
-  constructor(private readonly certificateService: CertificateService) {}
+
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CreateDiplomDto } from './dto/create-certificate.dto';
+import { UpdateCertificateDto } from './dto/update-certificate.dto';
+import { DiplomService } from './certificate.service';
+
+@ApiTags('Diploms')
+@Controller('diploms')
+export class DiplomController {
+  constructor(private readonly diplomService: DiplomService) {}
 
   @Post()
-  create(@Body() createCertificateDto: CreateCertificateDto) {
-    return this.certificateService.create(createCertificateDto);
+  @ApiOperation({ summary: 'Create a new diplom' })
+  @ApiResponse({ status: 201, description: 'Diplom successfully created.' })
+  async create(@Body() dto: CreateDiplomDto) {
+    return this.diplomService.create(dto);
   }
 
   @Get()
-  findAll() {
-    return this.certificateService.findAll();
+  @ApiOperation({ summary: 'Get all diploms' })
+  async findAll() {
+    return this.diplomService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.certificateService.findOne(+id);
+  @ApiOperation({ summary: 'Get diplom by id' })
+  @ApiResponse({ status: 404, description: 'Diplom not found.' })
+  async findOne(@Param('id') id: string) {
+    return this.diplomService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCertificateDto: UpdateCertificateDto) {
-    return this.certificateService.update(+id, updateCertificateDto);
+  @ApiOperation({ summary: 'Update diplom by id' })
+  @ApiResponse({ status: 200, description: 'Diplom successfully updated.' })
+  @ApiResponse({ status: 404, description: 'Diplom not found.' })
+  async update(@Param('id') id: string, @Body() dto: UpdateCertificateDto) {
+    return this.diplomService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.certificateService.remove(+id);
+  @ApiOperation({ summary: 'Delete diplom by id' })
+  @ApiResponse({ status: 200, description: 'Diplom successfully deleted.' })
+  @ApiResponse({ status: 404, description: 'Diplom not found.' })
+  async remove(@Param('id') id: string) {
+    return this.diplomService.remove(id);
   }
 }

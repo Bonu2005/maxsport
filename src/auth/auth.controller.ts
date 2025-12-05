@@ -7,10 +7,28 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer'
 import { extname } from 'path';
 import { GuardGuard } from 'src/guard/guard.guard';
+import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(GuardGuard)
   @Post('upload')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Загрузите изображение пользователя',
+    required: true,
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary', // ключевое для поля файла
+        },
+      },
+    },
+  })
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
@@ -37,15 +55,17 @@ export class AuthController {
   ) {
     return this.authService.uploadFile(req, res, file);
   }
+
+
   @Post("signup")
   create(@Body() createAuthDto: CreateAuthDto) {
     return this.authService.signup(createAuthDto);
   }
 
 
-  
-   @Post('send-otp')
-  async sendOtp(@Body() sendOtp:SendOtpDto) {
+
+  @Post('send-otp')
+  async sendOtp(@Body() sendOtp: SendOtpDto) {
     const { to, subject } = sendOtp;
     return this.authService.sendOtp(to, subject || 'Verification Code');
   }
@@ -55,7 +75,7 @@ export class AuthController {
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto);
   }
-  
+
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
     return this.authService.logout(req, res);
@@ -72,13 +92,10 @@ export class AuthController {
   }
 
 
-
-
+  @ApiBearerAuth('access-token')
   @UseGuards(GuardGuard)
   @Get('me')
-  getMyData(@Req() req,@Headers('authorization') authHeader: string) {
-    console.log('ss',authHeader);
-    
+  getMyData(@Req() req) {
     return this.authService.getMyData(req.user.id);
   }
 
@@ -91,7 +108,7 @@ export class AuthController {
   @Post('verify-otp-reset')
   verifyOtpReset(@Body() dto: VerifyOtpDtoReset) {
     console.log(dto);
-    
+
     return this.authService.verifyOtpReset(dto);
   }
 

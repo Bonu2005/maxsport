@@ -1,17 +1,18 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto, SignInDto, VerifyOtpDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import * as bcrypt from "bcrypt"
 import { totp } from 'otplib';
 import * as jwt from 'jsonwebtoken';
-import { Status } from '@prisma/client';
+
 import { stringToHash } from 'src/common/hash';
 import * as  DeviceDetector from 'device-detector-js';
 import { MailerService } from 'src/mailer/mailer.service';
 import { Request, Response } from 'express';
 import { log } from 'console';
+import { Status } from '@prisma/client';
 @Injectable()
 export class AuthService {
   private readonly deviceDetector: DeviceDetector;
@@ -24,41 +25,72 @@ export class AuthService {
   }
   async signup(dto: CreateAuthDto) {
     const { name, email, phoneNumber, password } = dto;
-    const existingUser = await this.prisma.users.findFirst({
-      where: {
-        OR: [
-          { email },
-          { phoneNumber },
-        ],
-      },
-    });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email or phone number already exists.');
+    try {
+      // Проверка существующих email и phone
+      let existingEmail, existingPhone;
+      try {
+        existingEmail = email ? await this.prisma.users.findUnique({ where: { email } }) : null;
+      } catch (err) {
+        return { error: 'Ошибка при проверке email', details: err instanceof Error ? err.message : err };
+      }
+
+      try {
+        existingPhone = phoneNumber ? await this.prisma.users.findUnique({ where: { phoneNumber } }) : null;
+      } catch (err) {
+        return { error: 'Ошибка при проверке phone', details: err instanceof Error ? err.message : err };
+      }
+
+      if (existingEmail) throw new ConflictException('Email уже используется');
+      if (existingPhone) throw new ConflictException('Телефон уже используется');
+
+      // Хеширование пароля
+      let hashedPassword;
+      try {
+        hashedPassword = await bcrypt.hash(password, 10);
+      } catch (err) {
+        return { error: 'Ошибка при хешировании пароля', details: err instanceof Error ? err.message : err };
+      }
+
+      // Создание пользователя со статусом PENDING
+      let user;
+      try {
+        user = await this.prisma.users.create({
+          data: {
+            name,
+            email,
+            phoneNumber,
+            password: hashedPassword,
+            status: 'PENDING',
+          },
+        });
+      } catch (err) {
+        return { error: 'Ошибка при создании пользователя', details: err instanceof Error ? err.message : err };
+      }
+
+      // Отправка OTP
+      const contact = email || phoneNumber;
+      if (contact) {
+        try {
+          await this.sendOtp(contact, 'Подтверждение регистрации');
+        } catch (err) {
+          return { error: 'Ошибка при отправке OTP', details: err instanceof Error ? err.message : err };
+        }
+      }
+
+      return {
+        message: 'User создан успешно. OTP отправлен.',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          status: user.status,
+        },
+      };
+    } catch (error) {
+      return { error: 'Ошибка регистрации', details: error instanceof Error ? error.message : error };
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await this.prisma.users.create({
-      data: {
-        name,
-        email,
-        phoneNumber,
-        password: hashedPassword,
-        status: Status.PENDING,
-      },
-    });
-
-    return {
-      message: 'User created successfully',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        status: user.status,
-      },
-    };
   }
 
 
@@ -67,130 +99,139 @@ export class AuthService {
 
     const isEmail = to.includes('@');
 
-    const user = await this.prisma.users.findFirst({
-      where: isEmail ? { email: to } : { phoneNumber: to },
-    });
-
-    if (!user) throw new NotFoundException('Пользователь не найден');
-
-    const existingOtp = await this.prisma.email_verification.findFirst({
-      where: isEmail ? { email: to } : { phoneNumber: to },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (existingOtp && existingOtp.expiresAt > new Date()) {
-      throw new ConflictException('OTP уже был отправлен, подожди немного');
+    let user;
+    try {
+      user = await this.prisma.users.findFirst({
+        where: isEmail ? { email: to } : { phoneNumber: to },
+      });
+      if (!user) throw new NotFoundException('Пользователь не найден');
+    } catch (err) {
+      return { error: 'Ошибка поиска пользователя', details: err instanceof Error ? err.message : err };
     }
 
+    try {
+      const existingOtp = await this.prisma.email_verification.findFirst({
+        where: isEmail ? { email: to } : { phoneNumber: to },
+        orderBy: { createdAt: 'desc' },
+      });
 
-    await this.prisma.email_verification.deleteMany({
-      where: isEmail ? { email: to } : { phoneNumber: to },
-    });
-
-
-    totp.options = { step: 60, digits: 6 };
-    const secret = stringToHash(`${to}-${Date.now()}`);
-    const otpCode = totp.generate(secret);
-    const expiresAt = new Date(Date.now() + 180 * 1000);
-
-
-    await this.prisma.email_verification.create({
-      data: {
-        userId: user.id,
-        email: isEmail ? to : "",
-        phoneNumber: isEmail ? "" : to,
-        secret,
-        expiresAt,
-      },
-    });
-
-    if (isEmail) {
-      const parameters = {
-        digit: otpCode,
-        expires_at: 180,
-      };
-
-      const result = await this.mailer.sendOtpMail(to, subject, otpCode);
-
-      if (!result.success) {
-        throw new InternalServerErrorException('Ошибка при отправке OTP на почту');
+      if (existingOtp && existingOtp.expiresAt > new Date()) {
+        throw new ConflictException('OTP уже был отправлен, подожди немного');
       }
 
-      return {
-        message: 'OTP отправлен на почту',
-        expiresAt,
-      };
-    } else {
+      await this.prisma.email_verification.deleteMany({
+        where: isEmail ? { email: to } : { phoneNumber: to },
+      });
+    } catch (err) {
+      return { error: 'Ошибка обработки старого OTP', details: err instanceof Error ? err.message : err };
+    }
 
-      const smsPayload = {
-        mobile_phone: to.replace(/\D/g, ''),
-        message: `Ваш OTP код: ${otpCode}. Действителен 3 минуты.`,
-        from: '4546',
-      };
+    // Генерация OTP
+    let otpCode, secret, expiresAt;
+    try {
+      totp.options = { step: 180, digits: 6 };
+      secret = stringToHash(`${to}-${Date.now()}`);
+      otpCode = totp.generate(secret);
+      expiresAt = new Date(Date.now() + 180 * 1000);
 
-      try {
-        await this.http.post('/message/sms/send', smsPayload).toPromise();
-
-        return {
-          message: 'OTP отправлен по SMS',
+      await this.prisma.email_verification.create({
+        data: {
+          userId: user.id,
+          email: isEmail ? to : "",
+          phoneNumber: isEmail ? "" : to,
+          secret,
           expiresAt,
+        },
+      });
+    } catch (err) {
+      return { error: 'Ошибка генерации OTP', details: err instanceof Error ? err.message : err };
+    }
+
+    // Отправка
+    try {
+      if (isEmail) {
+        const result = await this.mailer.sendOtpMail(to, subject, otpCode);
+        if (!result.success) throw new Error('Почта не отправлена');
+        return { message: 'OTP отправлен на почту', expiresAt };
+      } else {
+        const smsPayload = {
+          mobile_phone: to.replace(/\D/g, ''),
+          message: `Ваш OTP код: ${otpCode}. Действителен 3 минуты.`,
+          from: '4546',
         };
-      } catch (error) {
-        console.error('Eskiz error:', error.response?.data || error.message);
-        throw new InternalServerErrorException('Не удалось отправить SMS через Eskiz');
+        await this.http.post('/message/sms/send', smsPayload).toPromise();
+        return { message: 'OTP отправлен по SMS', expiresAt };
       }
+    } catch (err) {
+      return { error: 'Ошибка отправки OTP', details: err instanceof Error ? err.message : err };
     }
   }
+
+
+
+
   async verifyOtp(dto: VerifyOtpDto) {
     const { otpCode, contact, type } = dto;
 
     if (!otpCode || !contact) {
-      throw new BadRequestException('OTP code and contact are required');
+      return { error: 'OTP code и контакт обязателен' };
     }
 
     let user;
-    if (type === 'email') {
-      user = await this.prisma.users.findUnique({ where: { email: contact } });
-    } else if (type === 'sms') {
-      user = await this.prisma.users.findUnique({ where: { phoneNumber: contact } });
+    try {
+      if (type === 'email') {
+        user = await this.prisma.users.findUnique({ where: { email: contact } });
+      } else if (type === 'sms') {
+        user = await this.prisma.users.findUnique({ where: { phoneNumber: contact } });
+      }
+
+      if (!user) return { error: `Пользователь с таким ${type} не найден` };
+    } catch (err) {
+      return { error: 'Ошибка поиска пользователя', details: err instanceof Error ? err.message : err };
     }
 
-    if (!user) {
-      throw new NotFoundException(`User with this ${type} not found`);
+    let otpRequest;
+    try {
+      otpRequest = await this.prisma.email_verification.findFirst({
+        where: type === 'email'
+          ? { email: contact, expiresAt: { gt: new Date() } }
+          : { phoneNumber: contact, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!otpRequest) return { error: 'Нет активного OTP или OTP истек' };
+    } catch (err) {
+      return { error: 'Ошибка поиска OTP', details: err instanceof Error ? err.message : err };
     }
 
-    const otpRequest = await this.prisma.email_verification.findFirst({
-      where: type === 'email'
-        ? { email: contact, expiresAt: { gt: new Date() } }
-        : { phoneNumber: contact, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
-    });
-
-
-    if (!otpRequest) {
-      throw new BadRequestException('No active OTP found or OTP expired');
+    let isValid;
+    try {
+      isValid = totp.check(otpCode, otpRequest.secret);
+    } catch (err) {
+      return { error: 'Ошибка проверки OTP', details: err instanceof Error ? err.message : err };
     }
 
-    const isValid = totp.check(otpCode, otpRequest.secret);
-    console.log(otpCode, otpRequest.secret);
+    if (!isValid) return { error: 'Неверный OTP код' };
 
-
-    if (!isValid) {
-      throw new BadRequestException('Invalid OTP code');
+    try {
+      await this.prisma.users.update({
+        where: { id: user.id },
+        data: { status: Status.ACTIVE },
+      });
+    } catch (err) {
+      return { error: 'Ошибка активации пользователя', details: err instanceof Error ? err.message : err };
     }
 
-    await this.prisma.users.update({
-      where: { id: user.id },
-      data: { status: Status.ACTIVE },
-    });
+    try {
+      await this.prisma.email_verification.delete({
+        where: { id: otpRequest.id },
+      });
+    } catch (err) {
+      return { error: 'Ошибка удаления OTP', details: err instanceof Error ? err.message : err };
+    }
 
-    await this.prisma.email_verification.delete({
-      where: { id: otpRequest.id },
-    });
-
-    return { message: 'Account successfully activated' };
+    return { message: 'Аккаунт успешно активирован' };
   }
-
 
   async signin(dto: SignInDto, ip: string, userAgent: string) {
     const { email, password } = dto;
@@ -277,6 +318,8 @@ export class AuthService {
 
 
   async uploadFile(req: Request, res: Response, file: Express.Multer.File) {
+    console.log(req['user']);
+    
     try {
       const userId = req['user']?.id;
       if (!userId) {
@@ -287,11 +330,11 @@ export class AuthService {
 
       await this.prisma.users.update({
         where: { id: userId },
-        data: { img: filename },
+        data: { img:  `http://localhost:3000/uploads/users/${filename}` },
       });
 
       return res.status(201).json({
-        data: `http://localhost:3300/users/image/${filename}`,
+        data: `http://localhost:3000/uploads/users/${filename}`,
       });
     } catch (error) {
       console.error('Error Upload File:', error);
@@ -414,13 +457,13 @@ export class AuthService {
 
 
   async verifyOtpReset(dto: { contact: string, otpCode: string }) {
-   
+
     const { contact, otpCode } = dto;
     console.log(dto);
-    
+
     const normalized = contact.trim().toLowerCase();
-     console.log(normalized);
-     
+    console.log(normalized);
+
     // Находим пользователя
     const user = await this.prisma.users.findFirst({
       where: { email: normalized, status: 'ACTIVE' },
@@ -465,7 +508,7 @@ export class AuthService {
 
     const req = await this.prisma.reset_Password.findUnique({ where: { email } });
     console.log(req);
-    
+
     if (!req || !req.otpVerified || new Date() > req.expiresAt)
       throw new ForbiddenException('OTP not verified or expired');
 

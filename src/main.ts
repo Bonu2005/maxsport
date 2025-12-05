@@ -6,19 +6,28 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
     app.enableCors({
     origin: [
-   "*"
+   "https://master-fitness.netlify.app"
     ], // сюда добавляйте нужные фронтенд-домены
     credentials: false,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Authorization',
   });
   // ---
-  const config = new DocumentBuilder()
-    .setTitle('MaxSport API')
-    .setDescription('Authentication API for MaxSport project')
-    .setVersion('1.0')
-    .addBearerAuth() 
-    .build();
+const config = new DocumentBuilder()
+  .setTitle('MaxSport API')
+  .setDescription('Authentication API for MaxSport project')
+  .setVersion('1.0')
+  .addBearerAuth(
+    {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      in: 'header',
+    },
+    'access-token', // имя схемы
+  )
+  .build();
+
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

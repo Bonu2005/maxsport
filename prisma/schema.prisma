@@ -1,11 +1,12 @@
 // schema.prisma — исправленная версия для MaxSport (Prisma + PostgreSQL)
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 /**
@@ -22,6 +23,14 @@ enum Status {
   INACTIVE
   PENDING
   COMPLETED
+}
+
+
+enum MyCourseStatus {
+  ACTIVE       // курс сейчас проходит
+  COMPLETED    // курс завершён
+  DROPPED      // курс заброшен
+  INACTIVE
 }
 
 /**
@@ -110,17 +119,20 @@ model Course {
   status      Status    @default(ACTIVE)
 
   // Trainer (user) — тренер курса (опционально)
-  trainerId String?
-  trainer   Users?  @relation("TrainerCourses", fields: [trainerId], references: [id])
-
+  trainerId             String?
+  trainer               Users?     @relation("TrainerCourses", fields: [trainerId], references: [id])
+  Course_duration       String
+  Number_of_lessons     String
+  Training_format       String     @default("OFFLINE")
+  Course_Benefits_Sheet String
   // Relations
-  modules   Modul[]
-  lessons   Lesson[] // если у тебя уроки напрямую связаны с курсом
-  tests     Test[]
-  myCourses MyCourse[]
-  orders    Order[]
-  payments  Payment[] // прямые платежи, связанные с курсом (опционально)
-  diplomas  Diplom[]
+  modules               Modul[]
+  lessons               Lesson[] // если у тебя уроки напрямую связаны с курсом
+  tests                 Test[]
+  myCourses             MyCourse[]
+  orders                Order[]
+  payments              Payment[] // прямые платежи, связанные с курсом (опционально)
+  diplomas              Diplom[]
 
   createdAt DateTime @default(now())
   User      Users?   @relation(fields: [userId], references: [id])
@@ -281,7 +293,7 @@ model MyCourse {
   userId String
   user   Users  @relation(fields: [userId], references: [id])
 
-  status    Status   @default(ACTIVE)
+  status    MyCourseStatus   @default(ACTIVE)
   createdAt DateTime @default(now())
 }
 

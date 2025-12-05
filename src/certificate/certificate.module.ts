@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { CertificateService } from './certificate.service';
-import { CertificateController } from './certificate.controller';
+import { DiplomService } from './certificate.service';
+import { DiplomController } from './certificate.controller';
+
 
 @Module({
-  controllers: [CertificateController],
-  providers: [CertificateService],
+  controllers: [DiplomController],
+  providers: [DiplomService],
 })
 export class CertificateModule {}

@@ -1,26 +1,77 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateDiplomDto } from './dto/create-certificate.dto';
 import { UpdateCertificateDto } from './dto/update-certificate.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
-export class CertificateService {
-  create(createCertificateDto: CreateCertificateDto) {
-    return 'This action adds a new certificate';
+export class DiplomService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(dto: CreateDiplomDto) {
+    try {
+      return await this.prisma.diplom.create({ data: dto });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Конкретные ошибки Prisma, например дубликат ключа
+        if (error.code === 'P2002') {
+          throw new BadRequestException(`Дубликат значения: ${error.meta?.target}`);
+        }
+      }
+      // Остальные ошибки
+      throw new BadRequestException(error.message);
+    }
   }
 
-  findAll() {
-    return `This action returns all certificate`;
+async findAll() {
+  try {
+    return await this.prisma.diplom.findMany({
+      include: {
+        course: true,   // включаем полный объект курса
+        teacher: true,  // включаем полный объект преподавателя (если есть)
+        user: true,     // включаем полный объект пользователя
+      },
+    });
+  } catch (error) {
+    throw new BadRequestException(error.message);
+  }
+}
+
+async findOne(id: string) {
+  const diplom = await this.prisma.diplom.findUnique({
+    where: { id },
+    include: {
+      course: true,
+      teacher: true,
+      user: true,
+    },
+  });
+  if (!diplom) throw new NotFoundException(`Diplom с id ${id} не найден`);
+  return diplom;
+}
+
+
+  async update(id: string, dto: UpdateCertificateDto) {
+    await this.findOne(id);
+    try {
+      return await this.prisma.diplom.update({
+        where: { id },
+        data: dto,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException(error.message);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} certificate`;
-  }
-
-  update(id: number, updateCertificateDto: UpdateCertificateDto) {
-    return `This action updates a #${id} certificate`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} certificate`;
+  async remove(id: string) {
+    await this.findOne(id);
+    try {
+      return await this.prisma.diplom.delete({ where: { id } });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }

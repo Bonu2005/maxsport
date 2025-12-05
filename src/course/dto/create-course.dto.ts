@@ -66,4 +66,41 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString()
   trainerId?: string;
+
+  // Новые поля
+  @ApiProperty({
+    example: '3 месяца',
+    description: 'Длительность курса',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  Course_duration: string;
+
+  @ApiProperty({
+    example: '24 урока',
+    description: 'Количество уроков',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  Number_of_lessons: string;
+
+  @ApiProperty({
+    example: 'OFFLINE',
+    description: 'Формат обучения',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  Training_format: string = 'OFFLINE';
+
+  @ApiProperty({
+    example: 'Сертификат по окончанию курса, доступ к материалам',
+    description: 'Преимущества курса',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  Course_Benefits_Sheet: string;
 }

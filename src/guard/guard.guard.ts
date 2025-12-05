@@ -11,11 +11,13 @@ export class GuardGuard implements CanActivate {
         context: ExecutionContext,
     ): boolean | Promise<boolean> | Observable<boolean> {
 
-        const request = context.switchToHttp().getRequest<Request>();
+        const request:Request= context.switchToHttp().getRequest<Request>();
         console.log(request.headers);
 
         const authHeader = request.headers['authorization'] || request.headers['Authorization'];
         console.log(authHeader);
+        console.log('SECRET:', this.configService.get<string>('accessSecret'));
+
 
         if (!authHeader) {
             console.log('Authorization header missing');
@@ -28,7 +30,7 @@ export class GuardGuard implements CanActivate {
             throw new UnauthorizedException()
         }
         try {
-            let user = this.jwt.verify(token, { secret: this.configService.get<string>('accessSecret') })
+            let user = this.jwt.verify(token, { secret: "secret_access" })
             request["user"] = user
             console.log(user);
 
