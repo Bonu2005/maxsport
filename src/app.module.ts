@@ -20,6 +20,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MycourseModule } from './mycourse/mycourse.module';
 import { OrderModule } from './order/order.module';
+import { BranchModule } from './branch/branch.module';
+import { UserModule } from './user/user.module';
+import { HomeworkSubmissionModule } from './homework-submission/homework-submission.module';
 
 
 
@@ -27,7 +30,7 @@ import { OrderModule } from './order/order.module';
   imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestModule, QuestionModule, AnswerModule, UsertestresultModule, ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'), // указываем папку с файлами
       serveRoot: '/uploads', // путь в URL
-    }), MycourseModule, OrderModule,],
+    }), MycourseModule, OrderModule, BranchModule, UserModule, HomeworkSubmissionModule,],
   controllers: [AppController],
   providers: [AppService, MailerService],
 })

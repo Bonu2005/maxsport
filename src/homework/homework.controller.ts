@@ -1,34 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { HomeworkService } from './homework.service';
-import { CreateHomeworkDto } from './dto/create-homework.dto';
-import { UpdateHomeworkDto } from './dto/update-homework.dto';
+import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { HomeworkTaskService } from './homework.service';
+import { CreateHomeworkTaskDto } from './dto/create-homework.dto';
 
-@Controller('homework')
-export class HomeworkController {
-  constructor(private readonly homeworkService: HomeworkService) {}
+
+@ApiTags('Homework Tasks (Teacher)')
+@Controller('homework-tasks')
+export class HomeworkTaskController {
+  constructor(private service: HomeworkTaskService) {}
 
   @Post()
-  create(@Body() createHomeworkDto: CreateHomeworkDto) {
-    return this.homeworkService.create(createHomeworkDto);
+  create(@Body() dto: CreateHomeworkTaskDto) {
+    return this.service.create(dto);
   }
 
-  @Get()
-  findAll() {
-    return this.homeworkService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.homeworkService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateHomeworkDto: UpdateHomeworkDto) {
-    return this.homeworkService.update(+id, updateHomeworkDto);
+  @Get('lesson/:lessonId')
+  findByLesson(@Param('lessonId') lessonId: string) {
+    return this.service.findByLesson(lessonId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.homeworkService.remove(+id);
+    return this.service.remove(id);
+  }
+
+    // ✅ GET /homework-tasks
+  @Get()
+  findAll() {
+    return this.service.findAll();
   }
 }

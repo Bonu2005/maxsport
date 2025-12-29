@@ -61,4 +61,23 @@ export class ModulesService {
       throw new InternalServerErrorException('Ошибка при удалении модуля');
     }
   }
+
+  async findAll() {
+  try {
+    return await this.prisma.modul.findMany({
+      include: {
+        lessons: true,
+        course: true, // если нужно видеть курс
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+  } catch (error) {
+    throw new InternalServerErrorException(
+      'Ошибка при получении всех модулей',
+    );
+  }
+}
+
 }

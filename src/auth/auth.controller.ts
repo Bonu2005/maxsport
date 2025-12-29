@@ -24,7 +24,7 @@ export class AuthController {
       properties: {
         image: {
           type: 'string',
-          format: 'binary', // ключевое для поля файла
+          format: 'binary', 
         },
       },
     },
@@ -116,4 +116,43 @@ export class AuthController {
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
+
+
+@Post('upload-all')
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      image: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+})
+@UseInterceptors(
+  FileInterceptor('image', {
+    storage: diskStorage({
+      destination: './uploads/all',
+      filename: (req, file, cb) => {
+        const uniqueName =
+          Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = extname(file.originalname);
+        cb(null, uniqueName + ext);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      cb(null, true);
+    },
+  }),
+)
+uploadFiles(@UploadedFile() file: Express.Multer.File) {
+  const fileUrl = `https://telsot.uz/uploads/all/${file.filename}`;
+
+  return {
+    url: fileUrl,
+  };
+}
+
 }

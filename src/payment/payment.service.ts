@@ -21,6 +21,6 @@ export class PaymentService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} payment`;
+    return `This action removes a #${id} payment`;                 
   }
 }

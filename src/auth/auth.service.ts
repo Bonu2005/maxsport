@@ -137,12 +137,13 @@ export class AuthService {
       await this.prisma.email_verification.create({
         data: {
           userId: user.id,
-          email: isEmail ? to : "",
-          phoneNumber: isEmail ? "" : to,
+          email: isEmail ? to : null,
+          phoneNumber: isEmail ? null : to,
           secret,
           expiresAt,
         },
       });
+
     } catch (err) {
       return { error: 'Ошибка генерации OTP', details: err instanceof Error ? err.message : err };
     }
@@ -319,7 +320,7 @@ export class AuthService {
 
   async uploadFile(req: Request, res: Response, file: Express.Multer.File) {
     console.log(req['user']);
-    
+
     try {
       const userId = req['user']?.id;
       if (!userId) {
@@ -330,7 +331,7 @@ export class AuthService {
 
       await this.prisma.users.update({
         where: { id: userId },
-        data: { img:  `http://localhost:3000/uploads/users/${filename}` },
+        data: { img: `http://localhost:3000/uploads/users/${filename}` },
       });
 
       return res.status(201).json({

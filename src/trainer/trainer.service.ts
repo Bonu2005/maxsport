@@ -43,6 +43,7 @@ export class TrainerService {
           experience: dto.experience,
           role: Role.TEACHER,
           status: Status.ACTIVE,
+          description:dto.description
         },
       });
     } catch (error) {

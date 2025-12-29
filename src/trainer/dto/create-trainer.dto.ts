@@ -26,4 +26,12 @@ export class CreateTrainerDto {
   @IsOptional()
   @IsInt()
   experience?: number;
+
+  @ApiProperty({
+    example: "Профессиональный фитнес-тренер с 5-летним опытом работы",
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

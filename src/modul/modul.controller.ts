@@ -2,6 +2,7 @@ import { Controller, Post, Body, Patch, Param, Delete, Get } from '@nestjs/commo
 import { ModulesService } from './modul.service';
 import { CreateModuleDto } from './dto/create-modul.dto';
 import { UpdateModuleDto } from './dto/update-modul.dto';
+import { ApiOperation } from '@nestjs/swagger';
 
 
 @Controller('modules')
@@ -26,5 +27,10 @@ export class ModulesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.modulesService.remove(id);
+  }
+    @Get()
+  @ApiOperation({ summary: 'Получить все модули' })
+  findAll() {
+    return this.modulesService.findAll();
   }
 }

@@ -18,6 +18,24 @@ enum Role {
   ADMIN
 }
 
+enum HomeworkStatus {
+  PENDING
+  CHECKED
+  REJECTED
+}
+
+enum LessonStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum TestStatus {
+  DRAFT // черновик
+  ACTIVE // активен
+  FINISHED // завершён
+}
+
 enum Status {
   ACTIVE
   INACTIVE
@@ -25,11 +43,10 @@ enum Status {
   COMPLETED
 }
 
-
 enum MyCourseStatus {
-  ACTIVE       // курс сейчас проходит
-  COMPLETED    // курс завершён
-  DROPPED      // курс заброшен
+  ACTIVE // курс сейчас проходит
+  COMPLETED // курс завершён
+  DROPPED // курс заброшен
   INACTIVE
 }
 
@@ -38,27 +55,30 @@ enum MyCourseStatus {
  */
 
 model Users {
-  id           String     @id @default(uuid())
+  id           String  @id @default(uuid())
   name         String
-  email        String     @unique
-  phoneNumber  String     @unique
+  email        String  @unique
+  phoneNumber  String  @unique
   password     String
-  role         Role       @default(USER)
+  role         Role    @default(USER)
   individualId String?
   img          String?
   experience   Int?
-  status       Status     @default(PENDING)
+  status       Status  @default(PENDING)
+  description  String?
+
   // Relations
-  myCourses    MyCourse[] // пользовательские подписки/записи на курс
-  orders       Order[]
-  reviews      Review[]
-  payments     Payment[] // если нужно хранить прямые платежи пользователя (опционально)
-  homeworks    HomeWork[]
+  myCourses           MyCourse[] // пользовательские подписки/записи на курс
+  orders              Order[]
+  reviews             Review[]
+  payments            Payment[] // если нужно хранить прямые платежи пользователя (опционально)
+  homeworkSubmissions HomeworkSubmission[]
 
   testResults        UserTestResult[]
   coursesTaught      Course[]             @relation("TrainerCourses") // 👈 связь с курсами, где тренер
   diplomasTaught     Diplom[]             @relation("TeacherDiploms") // 👈 добавляем это
-  // timestamps
+  // timestampshhh
+  
   createdAt          DateTime             @default(now())
   Course             Course[]
   Diplom             Diplom[]
@@ -151,36 +171,53 @@ model Modul {
 }
 
 model Lesson {
-  id       String   @id @default(uuid())
-  name     String
-  video    String?
-  img      String[]
-  desc     String?
-  duration Int?
-
+  id        String         @id @default(uuid())
+  name      String
+  video     String?
+  img       String[]
+  desc      String?
+  duration  Int?
+  title     String // тема урока
   // связь с модулем (обязательная)
-  modulId String
-  modul   Modul  @relation(fields: [modulId], references: [id])
-
-  homeworks HomeWork[]
-  createdAt DateTime   @default(now())
-  Course    Course?    @relation(fields: [courseId], references: [id])
+  modulId   String
+  modul     Modul          @relation(fields: [modulId], references: [id])
+  homeworks HomeworkTask[]
+  createdAt DateTime       @default(now())
+  Course    Course?        @relation(fields: [courseId], references: [id])
   courseId  String?
+  startsAt  DateTime?
+  status    LessonStatus   @default(DRAFT)
 }
 
-model HomeWork {
-  id     String @id @default(uuid())
+model HomeworkTask {
+  id       String @id @default(uuid())
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+
+  title       String
+  description String?
+  files       String[]
+
+  deadline  DateTime?
+  createdAt DateTime  @default(now())
+
+  submissions HomeworkSubmission[]
+}
+
+model HomeworkSubmission {
+  id String @id @default(uuid())
+
+  homeworkId String
+  homework   HomeworkTask @relation(fields: [homeworkId], references: [id])
+
   userId String
   user   Users  @relation(fields: [userId], references: [id])
 
-  text      String?
-  img       String[]
-  video     String[]
-  createdAt DateTime @default(now())
-  status    Status   @default(PENDING)
+  text  String?
+  files String[]
 
-  lessonId String
-  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  status    HomeworkStatus @default(PENDING)
+  createdAt DateTime       @default(now())
 }
 
 model Review {
@@ -226,14 +263,27 @@ model Payment {
 }
 
 model Test {
-  id       String @id @default(uuid())
-  name     String
+  id   String @id @default(uuid())
+  name String
+
+  // к какому курсу относится
   courseId String
   course   Course @relation(fields: [courseId], references: [id])
 
+  // длительность теста (в минутах)
+  duration Int?
+
+  // дата старта теста
+  startDate DateTime?
+
+  // статус теста
+  status TestStatus @default(DRAFT)
+
+  // связи
   questions   Question[]
   userResults UserTestResult[]
-  createdAt   DateTime         @default(now())
+
+  createdAt DateTime @default(now())
 }
 
 model Question {
@@ -293,14 +343,18 @@ model MyCourse {
   userId String
   user   Users  @relation(fields: [userId], references: [id])
 
-  status    MyCourseStatus   @default(ACTIVE)
-  createdAt DateTime @default(now())
+  status    MyCourseStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
 }
 
-model Branche {
-  id    String  @id @default(uuid())
-  phone String?
-  email String?
-  sex   String?
-  time  String?
+model Branch {
+  id      String @id @default(uuid())
+  city    String
+  phone   String
+  email   String
+  address String
+  mapLink String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

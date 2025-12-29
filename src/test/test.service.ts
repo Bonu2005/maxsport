@@ -1,10 +1,11 @@
 // src/test/test.service.ts
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, HttpException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTestDto, UpdateTestDto } from './dto/create-test.dto';
 import { CreateQuestionDto, UpdateQuestionDto } from 'src/question/dto/create-question.dto';
 import { CreateAnswerDto } from 'src/answer/dto/create-answer.dto';
 import { UpdateAnswerDto } from 'src/answer/dto/update-answer.dto';
+import e from 'express';
 
 
 @Injectable()
@@ -12,15 +13,29 @@ export class TestService {
   constructor(private prisma: PrismaService) {}
 
   // --------------------- TEST ---------------------
-  async createTest(dto: CreateTestDto) {
-    try {
-      const course = await this.prisma.course.findUnique({ where: { id: dto.courseId } });
-      if (!course) throw new NotFoundException('Курс не найден');
-      return await this.prisma.test.create({ data: dto });
-    } catch (error) {
-      throw new InternalServerErrorException('Ошибка при создании теста');
+async createTest(dto: CreateTestDto) {
+  try {
+    const course = await this.prisma.course.findUnique({
+      where: { id: dto.courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Курс не найден');
     }
+
+    return await this.prisma.test.create({ data: dto });
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error; // ✅ пробрасываем конкретную ошибку
+    }
+
+    console.error(error); // полезно для логов
+
+    throw new InternalServerErrorException(
+      'Ошибка при создании теста',
+    );
   }
+}
 
   async getAllTests() {
     try {
