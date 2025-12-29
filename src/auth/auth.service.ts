@@ -331,11 +331,11 @@ export class AuthService {
 
       await this.prisma.users.update({
         where: { id: userId },
-        data: { img: `http://localhost:3000/uploads/users/${filename}` },
+        data: { img: `https://telsot.uz/uploads/users/${filename}` },
       });
 
       return res.status(201).json({
-        data: `http://localhost:3000/uploads/users/${filename}`,
+        data: `https://telsot.uz/uploads/users/${filename}`,
       });
     } catch (error) {
       console.error('Error Upload File:', error);
