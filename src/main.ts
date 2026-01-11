@@ -6,7 +6,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
     app.enableCors({
     origin: [
-   "https://master-fitness.netlify.app"
+   "https://master-fitness.netlify.app",
+   "http://localhost:3000"
     ], // сюда добавляйте нужные фронтенд-домены
     credentials: false,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
