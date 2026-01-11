@@ -74,11 +74,11 @@ model Users {
   payments            Payment[] // если нужно хранить прямые платежи пользователя (опционально)
   homeworkSubmissions HomeworkSubmission[]
 
-  testResults        UserTestResult[]
-  coursesTaught      Course[]             @relation("TrainerCourses") // 👈 связь с курсами, где тренер
-  diplomasTaught     Diplom[]             @relation("TeacherDiploms") // 👈 добавляем это
+  testResults    UserTestResult[]
+  coursesTaught  Course[]         @relation("TrainerCourses") // 👈 связь с курсами, где тренер
+  diplomasTaught Diplom[]         @relation("TeacherDiploms") // 👈 добавляем это
   // timestampshhh
-  
+
   createdAt          DateTime             @default(now())
   Course             Course[]
   Diplom             Diplom[]
@@ -251,15 +251,20 @@ model Payment {
   status   Status @default(PENDING)
   currency String @default("UZS")
 
-  // Payment привязан к order — это основная связь
+  clickTransId    String? // click_trans_id
+  merchantTransId String? // merchant_trans_id
+  errorCode       Int?
+  errorNote       String?
+
   orderId String
   order   Order  @relation(fields: [orderId], references: [id])
 
+  userId   String?
+  user     Users?  @relation(fields: [userId], references: [id])
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id])
+
   createdAt DateTime @default(now())
-  User      Users?   @relation(fields: [userId], references: [id])
-  userId    String?
-  Course    Course?  @relation(fields: [courseId], references: [id])
-  courseId  String?
 }
 
 model Test {
@@ -275,7 +280,7 @@ model Test {
 
   // дата старта теста
   startDate DateTime?
-
+  quantity Int?
   // статус теста
   status TestStatus @default(DRAFT)
 
@@ -357,4 +362,11 @@ model Branch {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+model Photo {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  createdAt DateTime @default(now())
 }

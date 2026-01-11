@@ -8,6 +8,7 @@ export class SubmitTestDto {
   @ApiProperty()
   userId: string;
 
+  @ApiProperty()
   answers: AnswerSubmitDto[];
 }
 

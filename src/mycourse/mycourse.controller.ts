@@ -30,9 +30,10 @@ export class MyCourseController {
   /**
    * USER — получить свои курсы
    */
-  @Get('my')
+  
+  @ApiBearerAuth('access-token')
   @UseGuards(GuardGuard)
-  @ApiBearerAuth()
+  @Get('my')
   @ApiOperation({ summary: 'Показать только мои курсы' })
   findMy(@Req() req) {
     return this.mycourseService.findMy(req.user.id);
@@ -41,9 +42,10 @@ export class MyCourseController {
   /**
    * USER — завершённые курсы
    */
-  @Get('my/completed')
+  
+  @ApiBearerAuth('access-token')
   @UseGuards(GuardGuard)
-  @ApiBearerAuth()
+  @Get('my/completed')
   @ApiOperation({ summary: 'Мои завершённые курсы' })
   findCompleted(@Req() req) {
     return this.mycourseService.findCompleted(req.user.id);

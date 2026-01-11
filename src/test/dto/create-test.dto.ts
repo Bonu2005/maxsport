@@ -17,6 +17,9 @@ export class CreateTestDto {
   @IsInt()
   duration: number;
 
+  @ApiProperty({ required: false })
+  quantity?: number;
+
   @ApiProperty({ example: '2025-01-01T10:00:00Z' })
   @IsDateString()
   startDate: string;
@@ -34,9 +37,14 @@ export class UpdateTestDto {
   duration?: number;
 
   @ApiProperty({ required: false })
+  quantity?: number;
+
+  @ApiProperty({ required: false })
   startDate?: string;
 
   @ApiProperty({ enum: TestStatus, required: false })
   status?: TestStatus;
+
+  
 }
 

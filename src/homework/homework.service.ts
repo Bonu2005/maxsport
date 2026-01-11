@@ -70,4 +70,34 @@ export class HomeworkTaskService {
       );
     }
   }
+
+  // homework-task.service.ts
+async findByCourseId(courseId: string) {
+  try {
+    return await this.prisma.homeworkTask.findMany({
+      where: {
+        lesson: {
+          modul: {
+            courseId: courseId,
+          },
+        },
+      },
+      include: {
+        lesson: {
+          include: {
+            modul: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  } catch (error) {
+    throw new InternalServerErrorException(
+      'Ошибка при получении домашних заданий по курсу',
+    );
+  }
+}
+
 }

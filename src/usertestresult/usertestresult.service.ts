@@ -13,6 +13,8 @@ export class UserTestResultService {
         where: { id: dto.testId },
         include: { questions: { include: { answers: true } } },
       });
+      console.log(test);
+      
       if (!test) throw new NotFoundException('Тест не найден');
 
       // Подсчёт правильных ответов
@@ -38,6 +40,8 @@ export class UserTestResultService {
 
       return { result, score };
     } catch (error) {
+      console.log(error);
+      
       throw new InternalServerErrorException('Ошибка при сдаче теста');
     }
   }

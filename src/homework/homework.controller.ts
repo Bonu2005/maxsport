@@ -23,10 +23,13 @@ export class HomeworkTaskController {
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
-
-    // ✅ GET /homework-tasks
   @Get()
   findAll() {
     return this.service.findAll();
+  }
+
+    @Get('course/:courseId')
+  findByCourseId(@Param('courseId') courseId: string) {
+    return this.service.findByCourseId(courseId);
   }
 }

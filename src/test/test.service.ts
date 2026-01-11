@@ -62,7 +62,8 @@ async createTest(dto: CreateTestDto) {
     try {
       return await this.prisma.test.update({ where: { id }, data: dto });
     } catch (error) {
-      throw new InternalServerErrorException('Ошибка при обновлении теста');
+      console.log(error);
+      throw new InternalServerErrorException(`Ошибка при обновлении теста ${error}`);
     }
   }
 
@@ -117,6 +118,8 @@ async createTest(dto: CreateTestDto) {
     try {
       return await this.prisma.answer.update({ where: { id }, data: dto });
     } catch (error) {
+      console.log(error);
+      
       throw new InternalServerErrorException('Ошибка при обновлении ответа');
     }
   }
