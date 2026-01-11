@@ -252,7 +252,7 @@ model Payment {
   currency String @default("UZS")
 
   clickTransId    String? // click_trans_id
-  merchantTransId String? // merchant_trans_id
+  merchantTransId String?   @unique// merchant_trans_id
   errorCode       Int?
   errorNote       String?
 
@@ -265,6 +265,7 @@ model Payment {
   course   Course? @relation(fields: [courseId], references: [id])
 
   createdAt DateTime @default(now())
+  
 }
 
 model Test {

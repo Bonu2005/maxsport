@@ -1,6 +1,16 @@
-// src/payments/dto/click.dto.ts
-import { IsNumber, IsString, IsOptional } from "class-validator";
+// src/payments/dto/prepare-payment.dto.ts
+import { IsNumber, IsOptional, IsString } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+
+export class PreparePaymentDto {
+  @ApiProperty({ example: "course-uuid" })
+  @IsString()
+  courseId: string;
+
+  @ApiProperty({ example: 100000 })
+  @IsNumber()
+  amount: number;
+}
 
 export class ClickDto {
   @ApiProperty({ example: 123456 })
