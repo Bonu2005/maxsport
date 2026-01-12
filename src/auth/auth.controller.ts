@@ -8,9 +8,11 @@ import { diskStorage } from 'multer'
 import { extname } from 'path';
 import { GuardGuard } from 'src/guard/guard.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { RefreshTokenGuard } from 'src/guard/refresh.guard';
+import { PrismaService } from 'src/prisma/prisma.service';
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService ) { }
 
   @ApiBearerAuth('access-token')
   @UseGuards(GuardGuard)
@@ -154,5 +156,11 @@ uploadFiles(@UploadedFile() file: Express.Multer.File) {
     url: fileUrl,
   };
 }
+
+@UseGuards(RefreshTokenGuard)
+  @Post('refresh')
+    refresh(@Req() req) {
+    return this.authService.refreshToken(req);
+  }
 
 }

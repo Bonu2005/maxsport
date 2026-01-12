@@ -48,7 +48,7 @@ export class ClickTestService {
       );
 
       // 4. Формируем ссылку на оплату
-      const paymentUrl = `https://my.click.uz/pay?merchant_id=${process.env.CLICK_MERCHANT_ID}&merchant_trans_id=${merchant_trans_id}&amount=${dto.amount}&service_id=1&sign=${sign}`;
+      const paymentUrl = `https://my.click.uz/services/pay?merchant_id=${process.env.CLICK_MERCHANT_ID}&merchant_trans_id=${merchant_trans_id}&amount=${dto.amount}&service_id=1&sign=${sign}`;
 
       return { paymentUrl };
     } catch (error) {

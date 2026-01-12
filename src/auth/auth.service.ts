@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, Req, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto, SignInDto, VerifyOtpDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -525,4 +525,32 @@ export class AuthService {
     return { message: 'Password successfully reset' };
   }
 
+ async refreshToken(@Req() req: Request) {
+    try {
+      const user = req['user'];
+
+      const payload = {
+        id: user.id,
+        status: user.status,
+        role: user.role,
+      };
+
+      const access_token =
+        this.generateAccessToken(payload);
+
+      return {
+        access_token
+      };
+    } catch (error) {
+      console.error('Refresh token error:', error);
+
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Unexpected error. Please try again later.',
+      );
+    }
+  }
 }
