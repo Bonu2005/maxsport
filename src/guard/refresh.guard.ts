@@ -11,38 +11,30 @@ import { Request } from 'express';
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private jwt: JwtService,
+    private config: ConfigService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<Request>();
+    const req = context.switchToHttp().getRequest();
 
-    // 1️⃣ Берём refresh_token из cookies
-    const refreshToken = request.cookies?.refresh_token;
+    const refreshToken =
+      req.cookies?.refresh_token ||
+      req.headers['x-refresh-token'];
 
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token missing');
     }
 
     try {
-      // 2️⃣ Проверяем refresh token
-      const decoded = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('refreshtoken'),
+      const user = this.jwt.verify(refreshToken, {
+        secret: this.config.get('REFRESH_SECRET'),
       });
 
-      // 3️⃣ Кладём пользователя в request
-      request['user'] = decoded;
-
+      req.user = user;
       return true;
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        throw new UnauthorizedException(
-          'Refresh token expired, please sign in again.',
-        );
-      }
-
-      throw new UnauthorizedException('Refresh token invalid');
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
 }

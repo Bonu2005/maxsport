@@ -324,21 +324,25 @@ model UserTestResult {
 }
 
 model Diplom {
-  id         String   @id @default(uuid())
-  codeDiplom String
-  createdAt  DateTime @default(now())
+  id               String   @id @default(uuid())
+  codeDiplom       String     @unique
+  createdAt        DateTime @default(now())
+
+  issuedAt         DateTime? // дата выдачи диплома
+  courseFinishedAt DateTime? // дата окончания курса
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id])
 
   teacherId String?
-  teacher   Users?  @relation("TeacherDiploms", fields: [teacherId], references: [id])
+  teacher   Users? @relation("TeacherDiploms", fields: [teacherId], references: [id])
 
   userId String
-  user   Users  @relation(fields: [userId], references: [id])
+  user   Users @relation(fields: [userId], references: [id])
 
   img String[]
 }
+
 
 model MyCourse {
   id String @id @default(uuid())
@@ -369,5 +373,12 @@ model Branch {
 model Photo {
   id        String   @id @default(uuid())
   imageUrl  String
+  createdAt DateTime @default(now())
+}
+
+model SocialNetwork {
+  id        String   @id @default(uuid())
+  name      String   // Instagram, Telegram, LinkedIn и т.д.
+  url       String
   createdAt DateTime @default(now())
 }
