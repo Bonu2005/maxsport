@@ -20,6 +20,9 @@ export class ClickTestService {
             if (!course) {
                 return { message: "Course not found" }
             }
+            if (!dto.redirect_url_front) {
+                return { message: "URL not found" }
+            }
 
             const url = `https://my.click.uz/services/pay?service_id=${process.env.CLICK_SERVICE_ID}&merchant_id=${process.env.CLICK_MERCHANT_ID}&amount=${course.price}&transaction_param=${dto.orderId}&return_url=${dto.redirect_url_front}`
             return url

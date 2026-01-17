@@ -24,15 +24,16 @@ import { BranchModule } from './branch/branch.module';
 import { UserModule } from './user/user.module';
 import { HomeworkSubmissionModule } from './homework-submission/homework-submission.module';
 import { ClickModule } from './click/click.module';
-// import { TestClickModule } from './test-click/test-click.module';
+
 import { PhotoModule } from './photo/photo.module';
 import { DiplomModule } from './diplom/diplom.module';
 import { SocialNetworkModule } from './social-network/social-network.module';
+import { TestClickModule } from './test-click/test-click.module';
 
 
 
 @Module({
-  imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestModule, QuestionModule, AnswerModule, UsertestresultModule, ServeStaticModule.forRoot({
+  imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestClickModule,TestModule, QuestionModule, AnswerModule, UsertestresultModule,ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'), // указываем папку с файлами
       serveRoot: '/uploads', // путь в URL
     }), MycourseModule, OrderModule, BranchModule, UserModule, HomeworkSubmissionModule, ClickModule, PhotoModule, DiplomModule, SocialNetworkModule,],
