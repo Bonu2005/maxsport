@@ -1,26 +1,21 @@
-// // src/payments/click-test.controller.ts
-// import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
-// import { ClickDto, PreparePaymentDto } from './dto/create-test-click.dto';
-// import { ClickTestService } from './test-click.service';
-// import { ApiBearerAuth } from '@nestjs/swagger';
-// import { GuardGuard } from 'src/guard/guard.guard';
+// src/payments/click-test.controller.ts
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+
+import { ClickTestService } from './test-click.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { GuardGuard } from 'src/guard/guard.guard';
+import { Redirect } from './dto/create-test-click.dto';
 
 
-// @Controller('payments/test-click')
-// export class ClickTestController {
-//   constructor(private readonly clickService: ClickTestService) { }
+@Controller('payments')
+export class ClickTestController {
+  constructor(private readonly clickService: ClickTestService) { }
+  @ApiBearerAuth('access-token')
+  @UseGuards(GuardGuard)
+  @Post('redirect')
+  async prepare(@Body() dto: Redirect,@Req() req) {
+    return this.clickService.redirect(dto,req.user.id);
+  }
 
-//   // ================= PREPARE =================
-//   @ApiBearerAuth('access-token')
-//   @UseGuards(GuardGuard)
-//   @Post('prepare')
-//   async prepare(@Body() dto: PreparePaymentDto,@Req() req) {
-//     return this.clickService.prepare(dto,req.user.id);
-//   }
 
-//   // ================= COMPLETE =================
-//   @Post('complete')
-//   async complete(@Body() dto: ClickDto) {
-//     return this.clickService.complete(dto);
-//   }
-// }
+}

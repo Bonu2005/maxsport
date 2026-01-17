@@ -353,7 +353,7 @@ export class AuthService {
         sessionId: payload.sessionId,
       },
       process.env.ACCESSTOKEN || 'secret_access',
-      { expiresIn: '15m' },
+      { expiresIn: '1d' },
     );
   }
 
