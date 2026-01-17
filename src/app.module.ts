@@ -24,7 +24,7 @@ import { BranchModule } from './branch/branch.module';
 import { UserModule } from './user/user.module';
 import { HomeworkSubmissionModule } from './homework-submission/homework-submission.module';
 import { ClickModule } from './click/click.module';
-import { TestClickModule } from './test-click/test-click.module';
+// import { TestClickModule } from './test-click/test-click.module';
 import { PhotoModule } from './photo/photo.module';
 import { DiplomModule } from './diplom/diplom.module';
 import { SocialNetworkModule } from './social-network/social-network.module';
@@ -35,7 +35,7 @@ import { SocialNetworkModule } from './social-network/social-network.module';
   imports: [PrismaModule, AuthModule, BotModule, PaymentModule, CertificateModule, TrainerModule, CourseModule, ModulModule, LessonModule, HomeworkModule, TestModule, QuestionModule, AnswerModule, UsertestresultModule, ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'), // указываем папку с файлами
       serveRoot: '/uploads', // путь в URL
-    }), MycourseModule, OrderModule, BranchModule, UserModule, HomeworkSubmissionModule, ClickModule, TestClickModule, PhotoModule, DiplomModule, SocialNetworkModule,],
+    }), MycourseModule, OrderModule, BranchModule, UserModule, HomeworkSubmissionModule, ClickModule, PhotoModule, DiplomModule, SocialNetworkModule,],
   controllers: [AppController],
   providers: [AppService, MailerService],
 })

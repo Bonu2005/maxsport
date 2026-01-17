@@ -28,17 +28,6 @@ export class OrderService {
         },
       });
 
-      // 2) Payment c amount = 0
-      await tx.payment.create({
-        data: {
-          orderId: order.id,
-          userId,
-          courseId: dto.courseId,
-          amount: 0,
-          status: Status.PENDING,
-        },
-      });
-
       // 3) MyCourse создаём, но не активируем
       await tx.myCourse.create({
         data: {

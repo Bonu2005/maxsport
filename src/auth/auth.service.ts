@@ -1,6 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, Req, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto, SignInDto, VerifyOtpDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import * as bcrypt from "bcrypt"
@@ -11,7 +10,6 @@ import { stringToHash } from 'src/common/hash';
 import * as  DeviceDetector from 'device-detector-js';
 import { MailerService } from 'src/mailer/mailer.service';
 import { Request, Response } from 'express';
-import { log } from 'console';
 import { Status } from '@prisma/client';
 @Injectable()
 export class AuthService {
